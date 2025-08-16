@@ -133,6 +133,7 @@ class ApiTest extends TestCase
             ->deleteJson("{$this->prefix}/drugs/308068")
             ->assertStatus(200);
     }
+
     public function test_delete_user_drug_not_found()
     {
 
