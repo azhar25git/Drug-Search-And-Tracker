@@ -82,21 +82,26 @@ class DrugController extends Controller
 
     public function list()
     {
-        $user = auth()->user();
-        $meds = $user->medications;
+        try {
+            $user = auth()->user();
+            $meds = $user->medications;
 
-        $results = [];
-        foreach ($meds as $med) {
-            $rxcui = $med->rxcui;
+            $results = [];
+            foreach ($meds as $med) {
+                $rxcui = $med->rxcui;
+                $details = RxnormService::getDrugDetails($rxcui);
 
-            $details = RxnormService::getDrugDetails($rxcui);
+                $results[] = [
+                    'rxID' => $rxcui,
+                    'drugName' => $details['name'],
+                    'baseNames' => $details['baseNames'], // ingredientAndStrength
+                    'doseFormGroupName' => $details['doseFormGroupName'], // doseFormGroupConcept
+                ];
+            }
 
-            $results[] = [
-                'rxcui' => $rxcui,
-                ...$details,
-            ];
+            return response()->json($results);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        return response()->json($results);
     }
 }

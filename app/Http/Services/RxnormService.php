@@ -27,7 +27,7 @@ class RxnormService
             $ttys = $ttyGroup['conceptProperties'] ?? [];
             $topResults = array_slice($ttys, 0, $limit);
 
-            $results = [];
+            $output = [];
             foreach ($topResults as $item) {
                 $rxcui = $item['rxcui'];
                 $name = $item['name'];
@@ -42,18 +42,26 @@ class RxnormService
                     return $histResponse->json()['rxcuiStatusHistory'];
                 });
 
-                $ingredients = collect($histData['definitionalFeatures']['ingredientAndStrength'] ?? [])->pluck('baseName')->unique()->values()->all();
-                $dosages = collect($histData['definitionalFeatures']['doseFormGroupConcept'] ?? [])->pluck('doseFormGroupName')->unique()->values()->all();
+                $ingredientBaseNames = collect($histData['definitionalFeatures']['ingredientAndStrength'] ?? [])
+                    ->pluck('baseName')
+                    ->unique()
+                    ->values()
+                    ->all();
+                $dosageForm = collect($histData['definitionalFeatures']['doseFormGroupConcept'] ?? [])
+                    ->pluck('doseFormGroupName')
+                    ->unique()
+                    ->values()
+                    ->all();
 
-                $results[] = [
+                $output[] = [
                     'rxcui' => $rxcui,
-                    'name' => $name,
-                    'ingredient_base_names' => $ingredients,
-                    'dosage_forms' => $dosages,
+                    'drugName' => $name,
+                    'ingredientBaseNames' => $ingredientBaseNames,
+                    'dosageForm' => $dosageForm,
                 ];
             }
 
-            return $results;
+            return $output;
         });
 
         return $results;
@@ -66,7 +74,8 @@ class RxnormService
             $histResponse = self::_getHistoryStatus($rxcui);
             $statusHistory = $histResponse->json()['rxcuiStatusHistory'] ?? [];
 
-            if ($histResponse->failed()
+            if (
+                $histResponse->failed()
                 || empty($statusHistory)
                 || empty($statusHistory['attributes'])
                 || empty($statusHistory['attributes']['name'])

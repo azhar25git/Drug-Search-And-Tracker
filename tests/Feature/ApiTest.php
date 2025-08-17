@@ -39,6 +39,16 @@ class ApiTest extends TestCase
         $response->assertStatus(201)->assertJsonStructure(['token']);
     }
 
+    public function test_register_fail()
+    {
+        $response = $this->postJson("{$this->prefix}/register", [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+        ]);
+
+        $response->assertStatus(422)->assertJsonStructure(['errors']);
+    }
+
     public function test_login_success()
     {
         $user = User::factory()->create(['password' => bcrypt('password')]);
@@ -51,17 +61,29 @@ class ApiTest extends TestCase
         $response->assertStatus(200)->assertJsonStructure(['token']);
     }
 
+    public function test_login_fail()
+    {
+        $user = User::factory()->create(['password' => bcrypt('password')]);
+
+        $response = $this->postJson("{$this->prefix}/login", [
+            'email' => $user->email,
+            'password' => '123',
+        ]);
+
+        $response->assertStatus(401)->assertJsonStructure(['error']);
+    }
+
     public function test_search_with_results()
     {
         $response = $this->getJson("{$this->prefix}/search?drug_name=paracetamol");
 
-        $response->assertStatus(200)
+        $response->assertOk()
             ->assertJsonStructure([
                 '*' => [
                     'rxcui',
-                    'name',
-                    'ingredient_base_names',
-                    'dosage_forms',
+                    'drugName',
+                    'ingredientBaseNames',
+                    'dosageForm',
                 ],
             ]);
     }
@@ -117,7 +139,7 @@ class ApiTest extends TestCase
             ->assertStatus(422);
     }
 
-    public function test_get_user_drug_list()
+    public function test_get_user_drug_list_success()
     {
 
         $token = $this->getToken();
@@ -128,7 +150,14 @@ class ApiTest extends TestCase
         $this->withHeader('Authorization', "Bearer $token")
             ->getJson("{$this->prefix}/drugs")
             ->assertOk()
-            ->assertJsonIsArray();
+            ->assertJsonStructure([
+                '*' => [
+                    'rxID',
+                    'drugName',
+                    'baseNames',
+                    'doseFormGroupName',
+                ],
+            ]);
     }
 
     public function test_delete_user_drug_success()
