@@ -28,3 +28,6 @@ The Drug Search and Tracker API is a Laravel-based RESTful API that enables user
 - Serve localhost: `php artisan serve` this will serve it on `http://127.0.0.1:8000/` by default
 - Run test with coverage: `php artisan test --coverage` Or, `XDEBUG_MODE=coverage php artisan test --coverage`
 
+### Dev info
+- This was developed on Ubuntu 24.04
+
