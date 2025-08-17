@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Medication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -54,6 +53,8 @@ class ApiTest extends TestCase
         ]);
 
         $response->assertStatus(422)->assertJsonStructure(['errors' => ['name', 'password']]);
+
+        $this->assertDatabaseEmpty('users');
     }
 
     public function test_login_success()
@@ -65,7 +66,7 @@ class ApiTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertStatus(200)->assertJsonStructure(['token']);
+        $response->assertOk()->assertJsonStructure(['token']);
         $this->assertDatabaseHas('users', ['email' => $user->email]);
     }
 
@@ -94,6 +95,14 @@ class ApiTest extends TestCase
                     'dosageForm',
                 ],
             ]);
+    }
+
+    public function test_search_returns_validation_error()
+    {
+        $response = $this->getJson("{$this->prefix}/search?drug_name=");
+
+        $response->assertStatus(422)
+            ->assertJsonStructure(['errors' => ['drug_name']]);
     }
 
     public function test_search_returns_empty()
@@ -145,6 +154,8 @@ class ApiTest extends TestCase
         $this->withHeader('Authorization', "Bearer $token")
             ->postJson("{$this->prefix}/drugs", ['rxcui' => '0'])
             ->assertStatus(422);
+
+        $this->assertDatabaseEmpty('medications');
     }
 
     public function test_get_user_drug_list_success()
@@ -173,7 +184,7 @@ class ApiTest extends TestCase
         $user = User::factory()->create();
         $drug = $user->medications()->create([
             'user_id' => $user->id,
-            'rxcui' => '308068'
+            'rxcui' => '308068',
         ]);
 
         $this->assertInstanceOf(User::class, $drug->user);

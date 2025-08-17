@@ -21,3 +21,10 @@ The Drug Search and Tracker API is a Laravel-based RESTful API that enables user
 - Git: For cloning the repository
 - Postman: For testing API endpoints
 
+## Local Usage
+
+### Commands
+- Composer setup: `composer install`
+- Serve localhost: `php artisan serve`
+- Run test with coverage: `php artisan test --coverage` Or, `XDEBUG_MODE=coverage php artisan test --coverage`
+
