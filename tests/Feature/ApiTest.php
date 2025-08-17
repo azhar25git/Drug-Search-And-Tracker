@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Medication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -43,10 +44,16 @@ class ApiTest extends TestCase
     {
         $response = $this->postJson("{$this->prefix}/register", [
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'password' => 'test@example.com',
         ]);
 
-        $response->assertStatus(422)->assertJsonStructure(['errors']);
+        $response->assertStatus(422)->assertJsonStructure(['errors' => ['email']]);
+
+        $response = $this->postJson("{$this->prefix}/register", [
+            'email' => 'testexample.com',
+        ]);
+
+        $response->assertStatus(422)->assertJsonStructure(['errors' => ['name', 'password']]);
     }
 
     public function test_login_success()
@@ -59,6 +66,7 @@ class ApiTest extends TestCase
         ]);
 
         $response->assertStatus(200)->assertJsonStructure(['token']);
+        $this->assertDatabaseHas('users', ['email' => $user->email]);
     }
 
     public function test_login_fail()
@@ -158,6 +166,18 @@ class ApiTest extends TestCase
                     'doseFormGroupName',
                 ],
             ]);
+    }
+
+    public function test_a_drug_belongs_to_a_user()
+    {
+        $user = User::factory()->create();
+        $drug = $user->medications()->create([
+            'user_id' => $user->id,
+            'rxcui' => '308068'
+        ]);
+
+        $this->assertInstanceOf(User::class, $drug->user);
+        $this->assertTrue($drug->user->is($user));
     }
 
     public function test_delete_user_drug_success()
