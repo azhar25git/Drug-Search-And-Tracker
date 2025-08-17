@@ -1,8 +1,8 @@
-#Overview
+## Overview
 
 The Drug Search and Tracker API is a Laravel-based RESTful API that enables users to search for drug information using the National Library of Medicine's RxNorm APIs and manage a personal medication list. The API supports user authentication, public drug searches, and private medication management with rate limiting, caching, and robust error handling. This project is designed for scalability, security, and ease of use, with comprehensive unit tests and API documentation.
 
-#Features  
+## Features  
   
 - User Authentication: Register and log in users with token-based authentication (Laravel Sanctum).
 - Public Drug Search: Search for drugs by name, returning up to 5 results with RxCUI, name, ingredient base names, and dosage forms.
@@ -12,7 +12,7 @@ The Drug Search and Tracker API is a Laravel-based RESTful API that enables user
 - Unit Tests: Includes tests targeting 90%+ coverage for key functionalities.
 - API Documentation: Postman collection for easy endpoint testing. Check the "Housecall API.postman_collection.json"
   
-#Prerequisites  
+## Prerequisites  
   
 - PHP: 8.1 or higher
 - Composer: Latest version
