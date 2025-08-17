@@ -2,36 +2,37 @@
 
 namespace App\Http\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class RxnormService
 {
-    public static int $expirySeconds = 3600;
+    private static int $expirySeconds = 3600;
 
     /**
      * @throws Exception
      */
-    public static function searchDrug(string $drug_name): array
+    public static function searchDrug(string $drug_name, string $ttyName = 'SBD', int $limit = 5): array
     {
-        $cacheKey = 'search_'.md5($drug_name);
-        $results = Cache::remember($cacheKey, self::$expirySeconds, function () use ($drug_name) {
+        $searchCacheKey = "search_{$ttyName}_".md5($drug_name);
+        $results = Cache::remember($searchCacheKey, self::$expirySeconds, function () use ($drug_name, $ttyName, $limit) {
             $response = self::_getDrugsByName($drug_name);
             if ($response->failed()) {
                 throw new \Exception('RxNorm API error');
             }
 
             $data = $response->json();
-            $sbdGroup = collect($data['drugGroup']['conceptGroup'] ?? [])->firstWhere('tty', 'SBD');
-            $sbds = $sbdGroup['conceptProperties'] ?? [];
-            $top5 = array_slice($sbds, 0, 5);
+            $ttyGroup = collect($data['drugGroup']['conceptGroup'] ?? [])->firstWhere('tty', $ttyName);
+            $ttys = $ttyGroup['conceptProperties'] ?? [];
+            $topResults = array_slice($ttys, 0, $limit);
 
             $results = [];
-            foreach ($top5 as $sbd) {
-                $rxcui = $sbd['rxcui'];
-                $name = $sbd['name'];
+            foreach ($topResults as $item) {
+                $rxcui = $item['rxcui'];
+                $name = $item['name'];
 
-                $histCacheKey = 'history_'.$rxcui;
+                $histCacheKey = "history_{$rxcui}";
                 $histData = Cache::remember($histCacheKey, self::$expirySeconds, function () use ($rxcui) {
                     $histResponse = self::_getHistoryStatus($rxcui);
                     if ($histResponse->failed()) {
@@ -58,13 +59,18 @@ class RxnormService
         return $results;
     }
 
-    public static function doesDrugExist(string $rxcui): bool
+    public static function isValidDrug(string $rxcui): bool
     {
         $histCacheKey = 'history_'.$rxcui;
         $histData = Cache::remember($histCacheKey, self::$expirySeconds, function () use ($rxcui) {
             $histResponse = self::_getHistoryStatus($rxcui);
+            $statusHistory = $histResponse->json()['rxcuiStatusHistory'] ?? [];
 
-            if ($histResponse->failed() || empty($histResponse->json()['rxcuiStatusHistory'])) {
+            if ($histResponse->failed()
+                || empty($statusHistory)
+                || empty($statusHistory['attributes'])
+                || empty($statusHistory['attributes']['name'])
+            ) {
                 return false;
             }
 

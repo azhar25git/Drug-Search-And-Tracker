@@ -97,13 +97,23 @@ class ApiTest extends TestCase
             ->assertStatus(400);
     }
 
-    public function test_add_drug_not_found()
+    public function test_add_to_drugslist_drug_not_found()
     {
 
         $token = $this->getToken();
 
         $this->withHeader('Authorization', "Bearer $token")
             ->postJson("{$this->prefix}/drugs", ['rxcui' => '308068a'])
+            ->assertStatus(422);
+    }
+
+    public function test_add_to_drugslist_drug_invalid()
+    {
+
+        $token = $this->getToken();
+
+        $this->withHeader('Authorization', "Bearer $token")
+            ->postJson("{$this->prefix}/drugs", ['rxcui' => '0'])
             ->assertStatus(422);
     }
 
@@ -117,7 +127,7 @@ class ApiTest extends TestCase
 
         $this->withHeader('Authorization', "Bearer $token")
             ->getJson("{$this->prefix}/drugs")
-            ->assertStatus(200)
+            ->assertOk()
             ->assertJsonIsArray();
     }
 
@@ -130,17 +140,17 @@ class ApiTest extends TestCase
             ->postJson("{$this->prefix}/drugs", ['rxcui' => '308068']);
 
         $this->withHeader('Authorization', "Bearer $token")
-            ->deleteJson("{$this->prefix}/drugs/308068")
-            ->assertStatus(200);
+            ->deleteJson("{$this->prefix}/drugs", ['rxcui' => '308068'])
+            ->assertOk();
     }
 
-    public function test_delete_user_drug_not_found()
+    public function test_delete_user_drug_invalid()
     {
 
         $token = $this->getToken();
 
         $this->withHeader('Authorization', "Bearer $token")
-            ->deleteJson("{$this->prefix}/drugs/308068")
-            ->assertStatus(404);
+            ->deleteJson("{$this->prefix}/drugs", ['rxcui' => '308068'])
+            ->assertStatus(422);
     }
 }

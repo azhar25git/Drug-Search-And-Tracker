@@ -14,6 +14,6 @@ Route::get('/search', [DrugController::class, 'search'])->middleware('throttle:1
 Route::middleware('auth:sanctum')->group(function () {
     // auth routes goes here
     Route::post('/drugs', [DrugController::class, 'add']);
-    Route::delete('/drugs/{rxcui}', [DrugController::class, 'delete']);
+    Route::delete('/drugs', [DrugController::class, 'delete']);
     Route::get('/drugs', [DrugController::class, 'list']);
 });

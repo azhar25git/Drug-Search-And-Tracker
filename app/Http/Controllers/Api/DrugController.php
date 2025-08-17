@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Services\RxnormService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class DrugController extends Controller
@@ -32,7 +33,7 @@ class DrugController extends Controller
                     'required',
                     'string',
                     function ($attribute, $value, $fail) {
-                        if (! RxnormService::doesDrugExist($value)) {
+                        if (! RxnormService::isValidDrug($value)) {
                             $fail("The {$attribute}: {$value} does not exist.");
                         }
                     },
@@ -55,9 +56,19 @@ class DrugController extends Controller
         }
     }
 
-    public function delete(string $rxcui)
+    public function delete(Request $request)
     {
         $user = auth()->user();
+
+        $rxcui = $request->validate([
+            'rxcui' => [
+                'required',
+                'string',
+                Rule::exists('medications', 'rxcui')
+                    ->where(fn ($query) => $query->where('user_id', $user->id)),
+            ],
+        ]);
+
         $med = $user->medications()->where('rxcui', $rxcui)->first();
 
         if (! $med) {
